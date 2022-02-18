@@ -1,6 +1,8 @@
 const { response } = require("express");
 const { ResultWithContext } = require("express-validator/src/chain");
 const userModel = require("../models/user")
+const jwt = require('jsonwebtoken')
+require("dotenv").config();
 
 
 module.exports = {
@@ -27,19 +29,24 @@ module.exports = {
             if (response.status) {
                 req.session.loggedIn = true;
                 req.session.user = response.user;
-                res.status(201).send({ message: "User Login Sucessfull" })
+                const token = jwt.sign({_id:response.user},process.env.JWT_SECRET,{ expiresIn:"8h"})
+                res.status(201).cookie("jwt",token,{expire : new Date()+9999,httpOnly:true}).send({ message: "User Login Sucessfull" , user: response.user},)
+
+
+
             } else {
                 req.session.loginErr = true;
                 console.log("user login err")
-                res.status(403).send({ message: "User Login error" })
+                res.status(401).send({ message: "User Login error" , })
             }
+
         })
     },
 
     userLogout:(req , res)=>{
         console.log(req.session);
     req.session.loggedIn = false;
-    res.send({message:"User Logout Sucessful"})
+    res.clearCookie("jwt").send({message:"User Logout Sucessful"})
     },
     getUser:(req,res)=>{
         console.log("controller");

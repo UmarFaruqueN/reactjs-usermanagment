@@ -1,4 +1,5 @@
-const adminModel = require("../models/admin")
+const adminModel = require("../models/admin");
+const jwt = require('jsonwebtoken');
 
 module.exports = {
     adminSignup: (req, res) => {
@@ -24,7 +25,8 @@ module.exports = {
             if (response.status) {
                 req.session.loggedIn = true;
                 req.session.user = response.user;
-                res.status(201).send({ message: "Admin Login Sucessfull" })
+                const token = jwt.sign({_id:response.user},process.env.JWT_SECRET,{ expiresIn:"8h"})
+                res.status(201).cookie("jwt",token,{expire : new Date()+9999,httpOnly:true}).send({ message: "Admin Login Sucessfull" , user: response.user},)
             } else {
                 req.session.loginErr = true;
                 console.log("user login err")
@@ -36,7 +38,7 @@ module.exports = {
     adminLogout:(req , res)=>{
         console.log(req.session);
     req.session.loggedIn = false;
-    res.send({message:"Admin Logout Sucessful"})
+    res.clearCookie("jwt").send({message:"Admin Logout Sucessful"})
     }
 }
 
